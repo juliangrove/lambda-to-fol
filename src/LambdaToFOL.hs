@@ -31,6 +31,7 @@ type family Domain (φ :: Type) where
   Domain R = Double
   Domain (φ :-> ψ) = Domain φ -> Domain ψ
   Domain (φ :/\ ψ) = (Domain φ, Domain ψ)
+  Domain Unit = ()
   Domain (P φ) = ProbProg (Domain φ)
 
 -- Interpreting constants
@@ -49,12 +50,8 @@ interpCon _ Sleep = sleep -- see below
 interpCon _ Teach = teach -- see below
 interpCon _ Indi = \φ -> indicator (entails 11 [] φ) -- see below; note that this this one goes to 11
 interpCon _ ExpVal = expVal                          -- see below
-
-true :: FOL.Form
-true = FOL.Or (FOL.P 0 []) (FOL.Not (FOL.P 0 []))
-
-false :: FOL.Form
-false = FOL.And (FOL.P 0 []) (FOL.Not (FOL.P 0 []))
+interpCon _ Factor = factor                          -- see below
+interpCon _ IfThenElse = \φ x y -> if entails 11 [] φ then x else y
 
 -- Interpreting lambda-terms
 -- Thie is the idea for our monadic contructors:
@@ -103,8 +100,25 @@ probability = Lam (App (App (Con ExpVal) (Var First)) (Con Indi))
 expVal :: ProbProg a -> (a -> Double) -> Double
 expVal (PP m) f = m f / m (const 1)
 
+factor :: Double -> ProbProg ()
+factor r = PP (\f -> r * f ())
 
 -- Convenient lambda-terms:
 
 prob :: Term γ (P T :-> R)
 prob = Lam (App (App (Con ExpVal) (Var First)) (Con Indi))
+
+true :: FOL.Form
+true = FOL.Or (FOL.P 0 []) (FOL.Not (FOL.P 0 []))
+
+false :: FOL.Form
+false = FOL.And (FOL.P 0 []) (FOL.Not (FOL.P 0 []))
+
+observe :: Term γ (T :-> P Unit)
+observe = Lam (App (Con Factor) (App (Con Indi) (Var First)))
+
+cOrJ :: Term γ (P E)
+cOrJ = Let (App (Con Bernoulli) (Con (ToReal 0.8)))
+       (Return (App (App (App (Con IfThenElse) (Var First)) (Con C)) (Con J)))
+
+julianSlept = App (Con Sleep) (Con J)

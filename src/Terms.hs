@@ -12,10 +12,8 @@ module Terms where
 -- Types
 data Type = E | T | R     -- Atomic types
           | Type :/\ Type -- Conjunctions
-          | Type :\/ Type -- Disjunctions
+          | Unit          -- Tautology
           | Type :-> Type -- Implications
-          | Taut          -- Tautology
-          | Contr         -- Contradiction
           | P Type        -- Probabilistic programs
 
 -- Contexts
@@ -42,8 +40,10 @@ data Constant (φ :: Type) where
   Exists :: Constant ((E :-> T) :-> T)
   Bernoulli :: Constant (R :-> P T)
   ToReal :: Double -> Constant R
+  Factor :: Constant (R :-> P Unit)
   ExpVal :: Constant (P α :-> ((α :-> R) :-> R))
   Indi :: Constant (T :-> R)
+  IfThenElse :: Constant (T :-> (α :-> (α :-> α)))
 
 -- Typed λ-terms
 data Term (γ :: Context) (φ :: Type) where
@@ -54,6 +54,7 @@ data Term (γ :: Context) (φ :: Type) where
   Pair :: Term γ φ -> Term γ ψ -> Term γ (φ :/\ ψ) -- pairing
   Pi1 :: Term γ (φ :/\ ψ) -> Term γ φ              -- first projection
   Pi2 :: Term γ (φ :/\ ψ) -> Term γ ψ              -- second projection
+  Un :: Term γ Unit                                -- unit
   Let :: Term γ (P φ) -> Term (Cons φ γ) (P ψ) -> Term γ (P ψ) -- monadic bind
   Return :: Term γ φ -> Term γ (P φ)                           -- monadic return
 
@@ -69,6 +70,7 @@ reorder f (App t u) = App (reorder f t) (reorder f u)
 reorder f (Pair t u) = Pair (reorder f t) (reorder f u)
 reorder f (Pi1 t) = Pi1 (reorder f t)
 reorder f (Pi2 t) = Pi2 (reorder f t)
+reorder _ Un = Un
 reorder f (Return t) = Return (reorder f t)
 reorder f (Let t u) = Let (reorder f t) (reorder g u)
   where g :: (forall χ. In χ (Cons φ γ) -> In χ (Cons φ δ))
@@ -96,6 +98,7 @@ subst f (Lam t) = Lam (subst g t)
         g (Next i) = weaken (f i)
 subst f (App t u) = App (subst f t) (subst f u)
 subst f (Pair t u) = Pair (subst f t) (subst f u)
+subst _ Un = Un
 subst f (Return t) = Return (subst f t)
 subst f (Let t u) = Let (subst f t) (subst g u)
   where g :: forall φ χ. In φ (Cons χ γ) -> Term (Cons χ δ) φ
@@ -125,6 +128,7 @@ normalForm (Pi1 t) =
 normalForm (Pi2 t) =
   case normalForm t of
     Pair _ u -> u
+normalForm Un = Un
 normalForm (Return t) = Return (normalForm t)
 normalForm (Let t u) =
   case normalForm t of
