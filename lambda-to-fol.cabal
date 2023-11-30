@@ -8,8 +8,8 @@ name:           lambda-to-fol
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/juliangroe/lambda-to-fol#readme>
 homepage:       https://github.com/juliangroe/lambda-to-fol#readme
-bug-reports:    https://github.com/juliangroe/lambda-to-fol/issues
-author:         Author name here
+-- bug-reports:    https://github.com/juliangroe/lambda-to-fol/issues
+author:         Julian Grove
 maintainer:     julian.grove@gmail.com
 copyright:      2023 Julian Grove
 -- license:        BSD-3-Clause
@@ -24,43 +24,11 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
-  other-modules:
-      Paths_lambda_to_fol
-  autogen-modules:
-      Paths_lambda_to_fol
+      Terms
+  -- other-modules:
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+    , fol-prover/src
   build-depends:
-      base >=4.7 && <5
-  default-language: Haskell2010
-
-executable lambda-to-fol-exe
-  main-is: Main.hs
-  other-modules:
-      Paths_lambda_to_fol
-  autogen-modules:
-      Paths_lambda_to_fol
-  hs-source-dirs:
-      app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      base >=4.7 && <5
-    , lambda-to-fol
-  default-language: Haskell2010
-
-test-suite lambda-to-fol-test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  other-modules:
-      Paths_lambda_to_fol
-  autogen-modules:
-      Paths_lambda_to_fol
-  hs-source-dirs:
-      test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      base >=4.7 && <5
-    , lambda-to-fol
+      base
   default-language: Haskell2010
