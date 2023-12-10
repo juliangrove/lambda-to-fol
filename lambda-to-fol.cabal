@@ -24,7 +24,10 @@ source-repository head
 
 library
   exposed-modules:
-      Terms
+      LambdaToFOL
+    , Pretty
+    , Terms
+    , Utterances
   -- other-modules:
   hs-source-dirs:
       src

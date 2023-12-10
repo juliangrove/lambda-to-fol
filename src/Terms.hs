@@ -3,14 +3,17 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Terms where
 
+import Utterances
+
 -- | Typed λ-calculus, with monadic constructors
 
 -- Types
-data Type = E | T | R     -- Atomic types
+data Type = E | T | I | U | R     -- Atomic types
           | Type :/\ Type -- Conjunctions
           | Unit          -- Tautology
           | Type :-> Type -- Implications
@@ -23,6 +26,7 @@ data Context = Empty | Cons Type Context
 data In (φ :: Type) (γ :: Context) where
   First :: In φ (Cons φ γ)
   Next :: In φ γ -> In φ (Cons ψ γ)
+deriving instance Show (In φ γ)
 
 -- Constants
 data Constant (φ :: Type) where
@@ -40,10 +44,18 @@ data Constant (φ :: Type) where
   Exists :: Constant ((E :-> T) :-> T)
   Bernoulli :: Constant (R :-> P T)
   ToReal :: Double -> Constant R
+  ToUtt :: Expr S -> Constant U
+  Interp :: Constant (U :-> (I :-> T))
   Factor :: Constant (R :-> P Unit)
   ExpVal :: Constant (P α :-> ((α :-> R) :-> R))
   Indi :: Constant (T :-> R)
   IfThenElse :: Constant (T :-> (α :-> (α :-> α)))
+  DensityU :: Constant (P U :-> (U :-> R))
+  DensityI :: Constant (P I :-> (I :-> R))
+  Utterances :: Constant (P U)
+  WorldKnowledge :: Constant (P I)
+  Alpha :: Constant (R :-> (R :-> R))
+deriving instance Show (Constant φ)
 
 -- Typed λ-terms
 data Term (γ :: Context) (φ :: Type) where
@@ -125,9 +137,11 @@ normalForm (Pair t u) = Pair (normalForm t) (normalForm u)
 normalForm (Pi1 t) =
   case normalForm t of
     Pair u _ -> u
+    t' -> Pi1 t'
 normalForm (Pi2 t) =
   case normalForm t of
     Pair _ u -> u
+    t' -> Pi2 t'
 normalForm Un = Un
 normalForm (Return t) = Return (normalForm t)
 normalForm (Let t u) =
