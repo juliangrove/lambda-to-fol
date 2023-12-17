@@ -54,6 +54,7 @@ data Constant (φ :: Type) where
   DensityI :: Constant (P I :-> (I :-> R))
   Utterances :: Constant (P U)
   WorldKnowledge :: Constant (P I)
+  Context :: Constant (P I)
   Alpha :: Constant (R :-> (R :-> R))
 deriving instance Show (Constant φ)
 

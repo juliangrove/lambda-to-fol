@@ -32,6 +32,7 @@ library
   hs-source-dirs:
       src
     , fol-prover/src
+    , ProbProg
   build-depends:
       base
   default-language: Haskell2010

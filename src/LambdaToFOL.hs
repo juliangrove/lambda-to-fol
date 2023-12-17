@@ -84,7 +84,7 @@ interpCon :: Integer -> Constant φ -> Domain φ
 interpCon _ C = FOL.N (FOL.Name 0)
 interpCon _ J = FOL.N (FOL.Name 1)
 interpCon _ (ToReal r) = r
-interpCon _ (ToUtt e) = e
+interpCon _ (ToUtt u) = u
 interpCon _ Bernoulli = \x -> bernoulli x -- see below
 interpCon _ And = \p q -> FOL.And p q
 interpCon _ Or = \p q -> FOL.Or p q
@@ -103,11 +103,12 @@ interpCon _ ExpVal = expVal                          -- see below
 interpCon _ Factor = factor                          -- see below
 interpCon _ IfThenElse = \φ x y -> if entails 11 [] φ then x else y
 interpCon _ Interp = \φ i -> if entails 11
-                                (interpClosedTerm (interpS φ) : i)
+                                (englishToFOL φ : i)
                                 false
                              then false
                              else true
 interpCon _ WorldKnowledge = worldKnowledge
+interpCon _ Context = worldKnowledge
 interpCon _ Utterances = utterances
 interpCon _ DensityI = densityI
 interpCon _ DensityU = densityU
@@ -135,7 +136,7 @@ interpClosedTerm = interpTerm 0 (\case)
 -- Convenience functions in our metalanguage
 
 categorical :: [Double] -> [a] -> ProbProg a
-categorical rs xs = PP (\f -> sum (zipWith (\r x -> r * f x) rs xs))
+categorical ws vs = PP (\f -> sum (zipWith (*) ws (map f vs)))
 
 bernoulli :: Double -> ProbProg FOL.Form
 bernoulli r = categorical [r, (1 - r)] [true, false]
@@ -216,25 +217,27 @@ densityU m u = expVal m (indicator . (== u))
 -- >>> densityU utterances noOneSleeps
 -- 0.33333333333333337
 
-l0 :: Term γ (U :-> P I)
-l0 = Lam (Let (Con WorldKnowledge) (Let (App (Con Factor) (App (Con Indi) (App (App (Con Interp) (Var (Next First))) (Var First)))) (Return (Var (Next First)))))
+l :: Integer -> Term γ (U :-> P I)
+l 0 = Lam (Let (Con Context) (Let (App (Con Factor) (App (Con Indi) (App (App (Con Interp) (Var (Next First))) (Var First)))) (Return (Var (Next First)))))
+l i = Lam (Let (Con Context) (Let (App (Con Factor) (App (App (Con DensityU) (App (s i) (Var First))) (Var (Next First)))) (Return (Var (Next First)))))
 
-s1 :: Term γ (I :-> P U)
-s1 = Lam (Let (Con Utterances) (Let (App (Con Factor) (App (App (Con Alpha) (Con (ToReal 4))) (App (App (Con DensityI) (App l0 (Var First))) (Var (Next First))))) (Return (Var (Next First)))))
+s :: Integer -> Term γ (I :-> P U)
+s i = Lam (Let (Con Utterances) (Let (App (Con Factor) (App (App (Con Alpha) (Con (ToReal 4))) (App (App (Con DensityI) (App (l (i-1)) (Var First))) (Var (Next First))))) (Return (Var (Next First)))))
 
-l1 :: Term γ (U :-> P I)
-l1 = Lam (Let (Con WorldKnowledge) (Let (App (Con Factor) (App (App (Con DensityU) (App s1 (Var First))) (Var (Next First)))) (Return (Var (Next First)))))
+-- >>> interpClosedTerm (App (Con DensityI) (App (l 0) (Con (ToUtt everyoneSleeps)))) i1
+-- 1.0
 
--- >>> interpClosedTerm (App (Con DensityI) (App l1 (Con (ToUtt someoneSleeps)))) i'
--- 0.47619047619047616
-
-test :: Term γ (P T)
-test = Let (Con WorldKnowledge) (Let (App observe (App (App (Con Interp) (Con (ToUtt everyoneSleeps))) (Var First))) (Return (App (App (Con Interp) (Con (ToUtt everyoneSleeps))) (Var (Next First)))))
+example :: Term γ (P I)
+example = Let (Con WorldKnowledge) (Let (App observe (App (App (Con Interp) (Con (ToUtt someoneSleeps))) (Var First))) (Return (Var (Next First))))
 
 -- An example possible world
-i' :: [FOL.Form]
-i' = [sleep (FOL.N (FOL.Name 1)), FOL.Not (sleep (FOL.N (FOL.Name 0)))]
+i0, i1 :: [FOL.Form]
+i0 = [sleep (FOL.N (FOL.Name 1)), FOL.Not (sleep (FOL.N (FOL.Name 0)))]
 
--- >>>  flip interpClosedTerm i' $ normalForm $ App (Con DensityI) (App l1 (Con (ToUtt someoneSleeps)))
--- 0.49696969696969695
+i1 = [sleep (FOL.N (FOL.Name 1)), sleep (FOL.N (FOL.Name 0))]
 
+-- >>>  interpClosedTerm (App (Con DensityI) (App (l 0) (Con (ToUtt someoneSleeps)))) i0
+-- 0.3333333333333333
+
+-- >>> p $ interpClosedTerm example >>= \i -> return (entails 11 i (sleep (FOL.N (FOL.Name 0))))
+-- 0.6666666666666666

@@ -1,3 +1,6 @@
 [submodule "fol-prover"]
 	path = fol-prover
 	url = git@github.com:juliangrove/fol-prover.git
+[submodule "ProbProg"]
+	path = ProbProg
+	url = git@github.com:jyp/ProbProg.git
