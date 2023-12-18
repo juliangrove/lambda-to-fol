@@ -9,6 +9,7 @@
 module Terms where
 
 import Utterances
+import qualified Formulae as FOL
 
 -- | Typed λ-calculus, with monadic constructors
 
@@ -33,6 +34,8 @@ data Constant (φ :: Type) where
   Dog :: Constant (E :-> T)
   Person :: Constant (E :-> T)
   Sleep :: Constant (E :-> T)
+  SleepInt :: Constant (E :-> (I :-> T))
+  Tall :: Constant (E :-> (I :-> T))
   Teach :: Constant (E :-> (E :-> T))
   C :: Constant E
   J :: Constant E
@@ -45,6 +48,7 @@ data Constant (φ :: Type) where
   Bernoulli :: Constant (R :-> P T)
   ToReal :: Double -> Constant R
   ToUtt :: Expr S -> Constant U
+  ToWorld :: [FOL.Form] -> Constant I
   Interp :: Constant (U :-> (I :-> T))
   Factor :: Constant (R :-> P Unit)
   ExpVal :: Constant (P α :-> ((α :-> R) :-> R))
@@ -56,6 +60,7 @@ data Constant (φ :: Type) where
   WorldKnowledge :: Constant (P I)
   Context :: Constant (P I)
   Alpha :: Constant (R :-> (R :-> R))
+  Normal :: Constant (R :-> (R :-> P R))
 deriving instance Show (Constant φ)
 
 -- Typed λ-terms

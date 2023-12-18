@@ -85,6 +85,7 @@ interpCon _ C = FOL.N (FOL.Name 0)
 interpCon _ J = FOL.N (FOL.Name 1)
 interpCon _ (ToReal r) = r
 interpCon _ (ToUtt u) = u
+interpCon _ (ToWorld i) = i
 interpCon _ Bernoulli = \x -> bernoulli x -- see below
 interpCon _ And = \p q -> FOL.And p q
 interpCon _ Or = \p q -> FOL.Or p q
@@ -127,7 +128,8 @@ interpTerm n g (Lam t) =
   \x -> interpTerm n (\i -> case i of First -> x; Next j -> g j) t
 interpTerm n g (Return t) = return (interpTerm n g t)
 interpTerm n g (Let t u) =
-  interpTerm n g t >>= \x -> interpTerm n (\i -> case i of First -> x; Next j -> g j) u
+  interpTerm n g t >>= \x ->
+  interpTerm n (\i -> case i of First -> x; Next j -> g j) u
 
 -- For closed λ-terms encoding whole meanings
 interpClosedTerm :: Term Empty φ -> Domain φ
@@ -214,8 +216,8 @@ mutualEntails n fs1 fs2 = all (entails n fs1) fs2 && all (entails n fs2) fs1
 densityU :: ProbProg (Expr S) -> Expr S -> Double
 densityU m u = expVal m (indicator . (== u))
 
--- >>> densityU utterances noOneSleeps
--- 0.33333333333333337
+-- >>> interpClosedTerm (App (App (Con DensityU) (App (s 1) (Con (ToWorld i1)))) (Con (ToUtt everyoneSleeps)))
+-- 0.9878048780487805
 
 l :: Integer -> Term γ (U :-> P I)
 l 0 = Lam (Let (Con Context) (Let (App (Con Factor) (App (Con Indi) (App (App (Con Interp) (Var (Next First))) (Var First)))) (Return (Var (Next First)))))
@@ -224,8 +226,8 @@ l i = Lam (Let (Con Context) (Let (App (Con Factor) (App (App (Con DensityU) (Ap
 s :: Integer -> Term γ (I :-> P U)
 s i = Lam (Let (Con Utterances) (Let (App (Con Factor) (App (App (Con Alpha) (Con (ToReal 4))) (App (App (Con DensityI) (App (l (i-1)) (Var First))) (Var (Next First))))) (Return (Var (Next First)))))
 
--- >>> interpClosedTerm (App (Con DensityI) (App (l 0) (Con (ToUtt everyoneSleeps)))) i1
--- 1.0
+-- >>> interpClosedTerm (App (App (Con DensityI) (App (l 1) (Con (ToUtt someoneSleeps)))) (Con (ToWorld i1)))
+-- 6.06060606060606e-3
 
 example :: Term γ (P I)
 example = Let (Con WorldKnowledge) (Let (App observe (App (App (Con Interp) (Con (ToUtt someoneSleeps))) (Var First))) (Return (Var (Next First))))
@@ -233,8 +235,9 @@ example = Let (Con WorldKnowledge) (Let (App observe (App (App (Con Interp) (Con
 -- An example possible world
 i0, i1 :: [FOL.Form]
 i0 = [sleep (FOL.N (FOL.Name 1)), FOL.Not (sleep (FOL.N (FOL.Name 0)))]
-
 i1 = [sleep (FOL.N (FOL.Name 1)), sleep (FOL.N (FOL.Name 0))]
+i2 = [FOL.Or (FOL.And (sleep (FOL.N (FOL.Name 1))) (FOL.Not (sleep (FOL.N (FOL.Name 0))))) (FOL.And (sleep (FOL.N (FOL.Name 0))) (FOL.Not (sleep (FOL.N (FOL.Name 1)))))]
+
 
 -- >>>  interpClosedTerm (App (Con DensityI) (App (l 0) (Con (ToUtt someoneSleeps)))) i0
 -- 0.3333333333333333
