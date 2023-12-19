@@ -34,8 +34,8 @@ data Constant (φ :: Type) where
   Dog :: Constant (E :-> T)
   Person :: Constant (E :-> T)
   Sleep :: Constant (E :-> T)
-  SleepInt :: Constant (E :-> (I :-> T))
-  Tall :: Constant (E :-> (I :-> T))
+  -- SleepInt :: 
+  -- Tall ::
   Teach :: Constant (E :-> (E :-> T))
   C :: Constant E
   J :: Constant E
